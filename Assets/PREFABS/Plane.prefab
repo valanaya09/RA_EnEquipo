@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1275964566448490509}
   - component: {fileID: 2679084489680070958}
   - component: {fileID: 1924791049657839033}
+  - component: {fileID: 5409598358157191600}
   m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
@@ -143,3 +144,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.XR.ARFoundation::UnityEngine.XR.ARFoundation.ARPlaneMeshVisualizer
   m_TrackingStateVisibilityThreshold: 1
   m_HideSubsumed: 1
+--- !u!114 &5409598358157191600
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7774066079913831400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 810e10289c35f784eabbd03f7ebcee15, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::planora
+  matHorizontal: {fileID: 2100000, guid: bfdccf35c62f49a40bf8cd4cb7b298ce, type: 2}
+  matVertical: {fileID: 2100000, guid: a677e449d92ca6e43a6b8b8e6f984273, type: 2}
+  etiquetaPrefab: {fileID: 1670914932080647260, guid: f244680c151952342b0591d0bb699858, type: 3}
