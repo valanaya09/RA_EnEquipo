@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/arsession.unity
-    guid: 1b3798f5f36732c4d85148145cd3f29d
+    path: Assets/Scenes/examen_parcial.unity
+    guid: c72da18636e97b946863ca5a90dd1c3b
   m_configObjects:
     UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: a7b79c51051670c4dbeb01b2d456a86c, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
