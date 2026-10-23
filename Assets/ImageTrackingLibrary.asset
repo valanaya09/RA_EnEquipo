@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848409ee8ba454f42a5ddff137688a27, type: 3}
+  m_Name: ImageTrackingLibrary
+  m_EditorClassIdentifier: Unity.XR.ARSubsystems::UnityEngine.XR.ARSubsystems.XRReferenceImageLibrary
+  m_GuidLow: 5322835254313082507
+  m_GuidHigh: 11735577362830218157
+  m_DataStore:
+    m_Storage: []
+  m_Images:
+  - m_SerializedGuid:
+      m_GuidLow: 5326327850911358973
+      m_GuidHigh: 3213829415793884558
+    m_SerializedTextureGuid:
+      m_GuidLow: 10778273230417365774
+      m_GuidHigh: 1799016640356423418
+    m_Size: {x: 0.15, y: 0.15}
+    m_SpecifySize: 1
+    m_Name: fuegooo
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 4737793321816137287
+      m_GuidHigh: 8373648604964980393
+    m_SerializedTextureGuid:
+      m_GuidLow: 6274818164422018351
+      m_GuidHigh: 12646711578515216458
+    m_Size: {x: 0.15, y: 0.15}
+    m_SpecifySize: 1
+    m_Name: gatoconlentes
+    m_Texture: {fileID: 0}
+  - m_SerializedGuid:
+      m_GuidLow: 5257991007961261297
+      m_GuidHigh: 8360676598400722110
+    m_SerializedTextureGuid:
+      m_GuidLow: 3090819666863393323
+      m_GuidHigh: 11955124894200974312
+    m_Size: {x: 0.15, y: 0.15201794}
+    m_SpecifySize: 1
+    m_Name: pibble
+    m_Texture: {fileID: 0}
