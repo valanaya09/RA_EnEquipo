@@ -147,9 +147,6 @@ PlayerSettings:
   bundleVersion: 0.1.0
   preloadedAssets:
   - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  - {fileID: -6110060555937075847, guid: 6f5d3e761d746fd4d9cacc41d7961207, type: 2}
-  - {fileID: 4800000, guid: c9f956787b1d945e7b36e0516201fc76, type: 3}
-  - {fileID: 4800000, guid: 0945859e5a1034c2cb6dce53cb4fb899, type: 3}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -932,11 +929,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
-  cloudProjectId: 4437c6ee-34bc-4b4d-b147-ea30cbaa0d06
+  cloudProjectId: 43a89b34-4ba4-4bb8-8a60-a7bb5c590106
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: Imagetracking_equipo
-  organizationId: aloalvarez22
+  projectName: ClaseRA
+  organizationId: valanayao0906
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
