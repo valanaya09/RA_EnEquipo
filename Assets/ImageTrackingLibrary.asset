@@ -18,32 +18,12 @@ MonoBehaviour:
     m_Storage: []
   m_Images:
   - m_SerializedGuid:
-      m_GuidLow: 5326327850911358973
-      m_GuidHigh: 3213829415793884558
+      m_GuidLow: 5366247811463791547
+      m_GuidHigh: 1033139719594136216
     m_SerializedTextureGuid:
-      m_GuidLow: 10778273230417365774
-      m_GuidHigh: 1799016640356423418
-    m_Size: {x: 0.15, y: 0.15}
-    m_SpecifySize: 1
-    m_Name: fuegooo
-    m_Texture: {fileID: 0}
-  - m_SerializedGuid:
-      m_GuidLow: 4737793321816137287
-      m_GuidHigh: 8373648604964980393
-    m_SerializedTextureGuid:
-      m_GuidLow: 6274818164422018351
-      m_GuidHigh: 12646711578515216458
-    m_Size: {x: 0.15, y: 0.15}
-    m_SpecifySize: 1
-    m_Name: gatoconlentes
-    m_Texture: {fileID: 0}
-  - m_SerializedGuid:
-      m_GuidLow: 5257991007961261297
-      m_GuidHigh: 8360676598400722110
-    m_SerializedTextureGuid:
-      m_GuidLow: 3090819666863393323
-      m_GuidHigh: 11955124894200974312
-    m_Size: {x: 0.15, y: 0.15201794}
-    m_SpecifySize: 1
-    m_Name: pibble
+      m_GuidLow: 0
+      m_GuidHigh: 0
+    m_Size: {x: 0, y: 0}
+    m_SpecifySize: 0
+    m_Name: 
     m_Texture: {fileID: 0}
