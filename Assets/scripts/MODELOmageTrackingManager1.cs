@@ -8,7 +8,7 @@ using UnityEngine.XR.ARSubsystems;
 
 using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
-public class ModelosImageTracking : MonoBehaviour
+public class TresModelosImageTracking : MonoBehaviour
 {
     [Header("Reference Image Library")]
     public XRReferenceImageLibrary imageLibrary;

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50a55c6f47c0c6c40b6ac5a694d20352, type: 3}
+  m_Name: Mandarina
+  m_EditorClassIdentifier: Assembly-CSharp::ModeloData
+  name: mandarino
+  description: gato fan de las mandarinas
+  category: gato adicto
+  level: 100
+  icon: {fileID: 21300000, guid: 0a61564dc130dbc4ebaec599c94b2824, type: 3}

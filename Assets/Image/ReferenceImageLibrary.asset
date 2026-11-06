@@ -23,8 +23,8 @@ MonoBehaviour:
     m_SerializedTextureGuid:
       m_GuidLow: 15835994601818248781
       m_GuidHigh: 2605415713674211051
-    m_Size: {x: 0, y: 0}
-    m_SpecifySize: 0
+    m_Size: {x: 0.1, y: 0.1}
+    m_SpecifySize: 1
     m_Name: MANDARINA
     m_Texture: {fileID: 0}
   - m_SerializedGuid:
@@ -33,8 +33,8 @@ MonoBehaviour:
     m_SerializedTextureGuid:
       m_GuidLow: 10390937787229426027
       m_GuidHigh: 13763574860662047307
-    m_Size: {x: 0, y: 0}
-    m_SpecifySize: 0
+    m_Size: {x: 0.1, y: 0.13224852}
+    m_SpecifySize: 1
     m_Name: GATO2
     m_Texture: {fileID: 0}
   - m_SerializedGuid:
@@ -43,7 +43,7 @@ MonoBehaviour:
     m_SerializedTextureGuid:
       m_GuidLow: 2712369773282907634
       m_GuidHigh: 15903087190519998811
-    m_Size: {x: 0, y: 0}
-    m_SpecifySize: 0
+    m_Size: {x: 0.1, y: 0.11682243}
+    m_SpecifySize: 1
     m_Name: VIC
     m_Texture: {fileID: 0}
