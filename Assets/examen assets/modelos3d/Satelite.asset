@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb2863ee318a964eaaa95bb18c6c040, type: 3}
+  m_Name: Satelite
+  m_EditorClassIdentifier: Assembly-CSharp::M_ModelData
+  name: "Sat\xE9lite artificial"
+  description: "Dispositivo construido por el ser humano que se coloca en \xF3rbita
+    alrededor de la Tierra u otro cuerpo celeste. Se utiliza para comunicaciones,
+    navegaci\xF3n, investigaci\xF3n y observaci\xF3n del planeta"
+  category: "Tecnolog\xEDa espacial"
+  level: 4
+  icon: {fileID: 21300000, guid: 9a01dae4490c10346bb04309805d6775, type: 3}
+  funFact: "\xA1El primer sat\xE9lite artificial, Sputnik 1, fue lanzado en 1957
+    y marc\xF3 el inicio de la era espacial!"
+  soundtrack: {fileID: 8300000, guid: 8540da75dc6e03948a5d58a3e6baf70e, type: 3}

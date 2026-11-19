@@ -83,7 +83,7 @@ PlayerSettings:
   androidApplicationEntry: 2
   defaultIsNativeResolution: 1
   macRetinaSupport: 1
-  runInBackground: 0
+  runInBackground: 1
   muteOtherAudioSources: 0
   Prepare IOS For Recording: 0
   Force IOS Speakers When Recording: 0
@@ -929,11 +929,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
-  cloudProjectId: 4437c6ee-34bc-4b4d-b147-ea30cbaa0d06
+  cloudProjectId: 43a89b34-4ba4-4bb8-8a60-a7bb5c590106
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: Imagetracking_equipo
-  organizationId: aloalvarez22
+  projectName: ClaseRA
+  organizationId: valanayao0906
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
