@@ -13,7 +13,7 @@ public class M_ImageTracking : MonoBehaviour
         [Header("Imagen registrada")]
         public string imageName;
 
-        [Header("Prefab del modelo")]
+        [Header("Prefab")]
         public GameObject imagePrefab;
 
         [Header("Posicion adicional")]
@@ -31,7 +31,7 @@ public class M_ImageTracking : MonoBehaviour
     [SerializeField]
     private ARTrackedImageManager imageManager;
 
-    [Header("Modelos del museo")]
+    [Header("Modelos")]
     [SerializeField]
     private List<ImagePrefab> imagePrefabs =
         new List<ImagePrefab>();
@@ -40,19 +40,19 @@ public class M_ImageTracking : MonoBehaviour
     [SerializeField, Min(0f)]
     private float trackingTimeout = 1f;
 
-    [Header("Indicador en pantalla")]
+    [Header("Indicador")]
     [SerializeField]
     private bool mostrarIndicador = true;
 
     [Header("Desplazamiento general")]
     [SerializeField]
     private Vector3 desplazamientoGeneral =
-        new Vector3(0f, -0.45f, -0.30f);
+        new Vector3(0f, 0.20f, 0f);
 
     [Header("Rotacion Tierra")]
     [SerializeField]
     private Vector3 rotacionTierra =
-        new Vector3(90f, 0f, 0f);
+        new Vector3(-90f, 0f, 0f);
 
     [Header("Rotacion Cohete")]
     [SerializeField]
@@ -91,7 +91,8 @@ public class M_ImageTracking : MonoBehaviour
     {
         get
         {
-            foreach (GameObject model in spawnedObjects.Values)
+            foreach (GameObject model
+                in spawnedObjects.Values)
             {
                 if (model != null &&
                     model.activeInHierarchy)
@@ -126,7 +127,8 @@ public class M_ImageTracking : MonoBehaviour
             OnImagesChanged
         );
 
-        foreach (ARTrackedImage image in imageManager.trackables)
+        foreach (ARTrackedImage image
+            in imageManager.trackables)
         {
             UpdateTrackedImage(image);
         }
@@ -141,7 +143,8 @@ public class M_ImageTracking : MonoBehaviour
             );
         }
 
-        foreach (GameObject model in spawnedObjects.Values)
+        foreach (GameObject model
+            in spawnedObjects.Values)
         {
             if (model != null)
                 model.SetActive(false);
@@ -163,18 +166,18 @@ public class M_ImageTracking : MonoBehaviour
             if (model == null)
                 continue;
 
-            bool recentlyTracked =
+            bool visible =
                 imagesWithValidPose.Contains(id) &&
                 lastTrackingTime.TryGetValue(
                     id, out float lastTime
                 ) &&
                 Time.time - lastTime <= trackingTimeout;
 
-            if (model.activeSelf != recentlyTracked)
+            if (model.activeSelf != visible)
             {
-                model.SetActive(recentlyTracked);
+                model.SetActive(visible);
 
-                if (recentlyTracked)
+                if (visible)
                     IniciarAnimaciones(model);
 
                 ModelsChanged?.Invoke();
@@ -187,19 +190,13 @@ public class M_ImageTracking : MonoBehaviour
     )
     {
         foreach (ARTrackedImage image in args.added)
-        {
             UpdateTrackedImage(image);
-        }
 
         foreach (ARTrackedImage image in args.updated)
-        {
             UpdateTrackedImage(image);
-        }
 
         foreach (var removed in args.removed)
-        {
             RemoveTrackedImage(removed.Key);
-        }
     }
 
     private void UpdateTrackedImage(ARTrackedImage image)
@@ -208,18 +205,13 @@ public class M_ImageTracking : MonoBehaviour
             return;
 
         TrackableId id = image.trackableId;
+        string nombre = image.referenceImage.name;
 
-        string detectedName =
-            image.referenceImage.name;
-
-        ImagePrefab config =
-            FindConfiguration(detectedName);
+        ImagePrefab config = FindConfiguration(nombre);
 
         if (config == null ||
             config.imagePrefab == null)
-        {
             return;
-        }
 
         if (!spawnedObjects.TryGetValue(
             id, out GameObject model
@@ -227,14 +219,15 @@ public class M_ImageTracking : MonoBehaviour
         {
             GameObject container =
                 new GameObject(
-                    detectedName + "_AR_Posicion"
+                    nombre + "_AR_Posicion"
                 );
 
             container.transform.SetParent(
-                image.transform,
-                false
+                image.transform, false
             );
 
+            // Elevar los modelos sin
+            // modificar sus animaciones.
             container.transform.localPosition =
                 config.positionOffset +
                 desplazamientoGeneral;
@@ -242,26 +235,20 @@ public class M_ImageTracking : MonoBehaviour
             Vector3 rotacion =
                 config.rotationOffset;
 
-            if (detectedName == "Tierra")
-            {
+            if (nombre == "Tierra")
                 rotacion += rotacionTierra;
-            }
-            else if (detectedName == "Cohete")
-            {
+            else if (nombre == "Cohete")
                 rotacion += rotacionCohete;
-            }
-            else if (detectedName == "Saturno")
-            {
+            else if (nombre == "Saturno")
                 rotacion += rotacionSaturno;
-            }
-            else if (detectedName == "Satelite")
-            {
+            else if (nombre == "Satelite")
                 rotacion += rotacionSatelite;
-            }
 
             container.transform.localRotation =
                 Quaternion.Euler(rotacion);
 
+            // Mantener el tamano configurado
+            // para cada modelo.
             float multiplicador =
                 Mathf.Max(
                     0.01f,
@@ -277,9 +264,10 @@ public class M_ImageTracking : MonoBehaviour
                 false
             );
 
-            model.name =
-                detectedName + "_AR";
+            model.name = nombre + "_AR";
 
+            // No se cambia localScale
+            // ni se modifican los clips.
             model.SetActive(false);
 
             modelContainers[id] =
@@ -294,16 +282,12 @@ public class M_ImageTracking : MonoBehaviour
             TrackingState.Tracking)
         {
             imagesWithValidPose.Add(id);
-
-            lastTrackingTime[id] =
-                Time.time;
+            lastTrackingTime[id] = Time.time;
 
             if (!model.activeSelf)
             {
                 model.SetActive(true);
-
                 IniciarAnimaciones(model);
-
                 ModelsChanged?.Invoke();
             }
         }
@@ -324,11 +308,13 @@ public class M_ImageTracking : MonoBehaviour
                 continue;
             }
 
+            // Iniciar desde Entry.
             animator.Rebind();
             animator.Update(0f);
 
-            foreach (
-                AnimatorControllerParameter parametro
+            // Activar Idle para la transicion
+            // despues de la aparicion.
+            foreach (AnimatorControllerParameter parametro
                 in animator.parameters)
             {
                 if (parametro.name == "idle" &&
@@ -391,49 +377,32 @@ public class M_ImageTracking : MonoBehaviour
         if (!mostrarIndicador)
             return;
 
-        string mensaje =
-            "SIN IMAGEN DETECTADA";
-
-        string detalle =
-            "Buscando imagenes...";
+        string mensaje = "SIN IMAGEN DETECTADA";
+        string detalle = "Buscando imagenes...";
 
         Color color =
             new Color(0.18f, 0.22f, 0.28f);
 
         if (imageManager != null)
         {
-            ARTrackedImage seleccionada = null;
-
             foreach (ARTrackedImage image
                 in imageManager.trackables)
             {
-                if (image.trackingState ==
+                if (image.trackingState !=
                     TrackingState.Tracking)
-                {
-                    seleccionada = image;
-                    break;
-                }
-            }
+                    continue;
 
-            if (seleccionada != null)
-            {
-                string nombre =
-                    seleccionada.referenceImage.name;
-
-                mensaje =
-                    "IMAGEN DETECTADA: " +
-                    nombre.ToUpper();
+                mensaje = "IMAGEN DETECTADA: " +
+                    image.referenceImage.name.ToUpper();
 
                 color =
                     new Color(0.12f, 0.48f, 0.32f);
 
-                if (
-                    spawnedObjects.TryGetValue(
-                        seleccionada.trackableId,
-                        out GameObject modelo
-                    ) &&
-                    modelo != null &&
-                    modelo.activeInHierarchy)
+                if (spawnedObjects.TryGetValue(
+                    image.trackableId,
+                    out GameObject model
+                ) && model != null &&
+                    model.activeInHierarchy)
                 {
                     detalle = "MODELO ACTIVO";
                 }
@@ -441,36 +410,28 @@ public class M_ImageTracking : MonoBehaviour
                 {
                     detalle = "MODELO NO VISIBLE";
                 }
+
+                break;
             }
         }
 
         float ancho =
-            Mathf.Min(
-                Screen.width - 24f,
-                650f
-            );
+            Mathf.Min(Screen.width - 24f, 650f);
 
-        float alto = 100f;
+        float x = (Screen.width - ancho) / 2f;
 
-        float x =
-            (Screen.width - ancho) / 2f;
-
-        float y =
-            Screen.height -
+        float y = Screen.height -
             Screen.safeArea.yMax + 15f;
 
         Rect fondo =
-            new Rect(x, y, ancho, alto);
+            new Rect(x, y, ancho, 100f);
 
         Color anterior = GUI.color;
 
         GUI.color = color;
-
         GUI.DrawTexture(
-            fondo,
-            Texture2D.whiteTexture
+            fondo, Texture2D.whiteTexture
         );
-
         GUI.color = anterior;
 
         GUIStyle titulo =
@@ -479,50 +440,28 @@ public class M_ImageTracking : MonoBehaviour
         titulo.alignment =
             TextAnchor.MiddleCenter;
 
-        titulo.fontStyle =
-            FontStyle.Bold;
-
-        titulo.fontSize =
-            Mathf.Clamp(
-                Screen.width / 35,
-                16,
-                32
-            );
-
-        titulo.normal.textColor =
-            Color.white;
+        titulo.fontStyle = FontStyle.Bold;
+        titulo.fontSize = Mathf.Clamp(
+            Screen.width / 35, 16, 32
+        );
+        titulo.normal.textColor = Color.white;
 
         GUIStyle subtitulo =
             new GUIStyle(titulo);
 
-        subtitulo.fontStyle =
-            FontStyle.Normal;
-
-        subtitulo.fontSize =
-            Mathf.Clamp(
-                Screen.width / 45,
-                13,
-                25
-            );
+        subtitulo.fontStyle = FontStyle.Normal;
+        subtitulo.fontSize = Mathf.Clamp(
+            Screen.width / 45, 13, 25
+        );
 
         GUI.Label(
-            new Rect(
-                x + 5,
-                y + 12,
-                ancho - 10,
-                40
-            ),
+            new Rect(x + 5, y + 12, ancho - 10, 40),
             mensaje,
             titulo
         );
 
         GUI.Label(
-            new Rect(
-                x + 5,
-                y + 53,
-                ancho - 10,
-                32
-            ),
+            new Rect(x + 5, y + 53, ancho - 10, 32),
             detalle,
             subtitulo
         );

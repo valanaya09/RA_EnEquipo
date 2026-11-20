@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffb2863ee318a964eaaa95bb18c6c040, type: 3}
   m_Name: Satelite
   m_EditorClassIdentifier: Assembly-CSharp::M_ModelData
-  name: "Sat\xE9lite artificial"
+  name: Satelite
   description: "Dispositivo construido por el ser humano que se coloca en \xF3rbita
     alrededor de la Tierra u otro cuerpo celeste. Se utiliza para comunicaciones,
     navegaci\xF3n, investigaci\xF3n y observaci\xF3n del planeta"

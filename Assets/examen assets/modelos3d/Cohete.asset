@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffb2863ee318a964eaaa95bb18c6c040, type: 3}
   m_Name: Cohete
   m_EditorClassIdentifier: Assembly-CSharp::M_ModelData
-  name: Cohete espacial
+  name: Cohete
   description: "Veh\xEDculo dise\xF1ado para viajar al espacio mediante motores que
     expulsan gases a gran velocidad. Se utiliza para transportar sat\xE9lites, sondas
     y astronautas."

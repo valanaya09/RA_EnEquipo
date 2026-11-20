@@ -14,7 +14,7 @@ public class M_RaycastManager : MonoBehaviour
     [Header("Panel de informacion")]
     [SerializeField] private GameObject infoPanel;
 
-    [Header("Nombre")]
+    [Header("Nombre del modelo")]
     [SerializeField] private TMP_Text modelName;
 
     [Header("Descripcion")]
@@ -23,7 +23,7 @@ public class M_RaycastManager : MonoBehaviour
     [Header("Categoria")]
     [SerializeField] private TMP_Text categoryText;
 
-    [Header("Nivel o periodo")]
+    [Header("Periodo o nivel")]
     [SerializeField] private TMP_Text levelText;
 
     [Header("Icono")]
@@ -38,19 +38,29 @@ public class M_RaycastManager : MonoBehaviour
     [Header("Image Tracking")]
     [SerializeField] private M_ImageTracking imageTracking;
 
-    [Header("Tamano de botones")]
+    [Header("Botones automaticos")]
     [SerializeField]
     private Vector2 buttonSize =
-        new Vector2(200f, 50f);
+        new Vector2(200f, 120f);
 
-    [SerializeField] private float buttonSpacing = 15f;
-    [SerializeField] private float buttonTopMargin = 20f;
+    [SerializeField]
+    private float buttonSpacing = 25f;
+
+    [SerializeField]
+    private float buttonBottomMargin = 15f;
+
+    [Header("Diagnostico en pantalla")]
+    [SerializeField]
+    private bool mostrarDiagnostico = true;
+
+    private string estado = "ESPERANDO TOQUE";
 
     private M_ModelInfo selectedModel;
-    private bool funFactVisible;
 
     private Button funFactButton;
     private Button closeButton;
+
+    private bool funFactVisible = false;
 
     private void Awake()
     {
@@ -58,11 +68,13 @@ public class M_RaycastManager : MonoBehaviour
             arCamera = Camera.main;
 
         if (imageTracking == null)
+        {
             imageTracking =
                 FindFirstObjectByType<M_ImageTracking>();
+        }
 
-        CreateButtons();
-        ClearInfo();
+        ConfigurarAudio();
+        CrearBotones();
     }
 
     private void OnEnable()
@@ -73,24 +85,26 @@ public class M_RaycastManager : MonoBehaviour
 
     private void OnDisable()
     {
-        StopSoundtrack();
         EnhancedTouchSupport.Disable();
+        ClearInfo();
     }
 
     private void Update()
     {
-        // Cerrar la ficha si desaparece el modelo.
-        if (selectedModel != null &&
-            !selectedModel.gameObject.activeInHierarchy)
+        if (selectedModel != null)
         {
-            ClearInfo();
+            if (!selectedModel.gameObject.activeInHierarchy)
+                ClearInfo();
         }
 
         if (arCamera == null)
             arCamera = Camera.main;
 
-        if (arCamera == null)
-            return;
+        if (imageTracking == null)
+        {
+            imageTracking =
+                FindFirstObjectByType<M_ImageTracking>();
+        }
 
         foreach (var touch in
             UnityEngine.InputSystem.EnhancedTouch
@@ -99,28 +113,36 @@ public class M_RaycastManager : MonoBehaviour
             if (!touch.began)
                 continue;
 
-            Vector2 position = touch.screenPosition;
-
-            // No atravesar botones de la interfaz.
-            if (TouchOverButton(position))
+            if (arCamera == null)
                 continue;
 
-            // No cambiar de modelo mientras
-            // una ficha esta abierta.
-            if (infoPanel != null &&
+            Vector2 posicion = touch.screenPosition;
+
+            estado = "TOQUE RECIBIDO";
+
+            if (TocoBoton(posicion))
+                continue;
+
+            if (selectedModel != null &&
+                infoPanel != null &&
                 infoPanel.activeInHierarchy)
+            {
                 continue;
+            }
 
             Ray ray = arCamera.ScreenPointToRay(
-                position
+                posicion
             );
 
-            // Buscar todos los Colliders alcanzados.
+            Physics.SyncTransforms();
+
+            M_ModelInfo modelInfo = null;
+
             RaycastHit[] hits = Physics.RaycastAll(
                 ray,
                 Mathf.Infinity,
                 ~0,
-                QueryTriggerInteraction.Collide
+                QueryTriggerInteraction.Ignore
             );
 
             System.Array.Sort(
@@ -131,63 +153,165 @@ public class M_RaycastManager : MonoBehaviour
 
             foreach (RaycastHit hit in hits)
             {
-                if (hit.collider == null)
-                    continue;
-
-                // Metodo del codigo original:
-                // buscar la informacion en los padres.
-                M_ModelInfo modelInfo =
+                modelInfo =
                     hit.collider
                         .GetComponentInParent<M_ModelInfo>();
 
-                // Si no esta en los padres,
-                // buscarla en el Prefab AR
-                // correspondiente al Collider.
-                if (modelInfo == null &&
-                    imageTracking != null)
+                if (modelInfo != null &&
+                    modelInfo.Data != null)
                 {
-                    foreach (GameObject root
-                        in imageTracking.ActiveModels)
+                    break;
+                }
+
+                modelInfo = null;
+
+                if (imageTracking == null)
+                    continue;
+
+                foreach (GameObject model
+                    in imageTracking.ActiveModels)
+                {
+                    if (model == null)
+                        continue;
+
+                    Transform t =
+                        hit.collider.transform;
+
+                    if (t == model.transform ||
+                        t.IsChildOf(model.transform))
                     {
-                        if (root == null)
-                            continue;
-
-                        Transform colliderTransform =
-                            hit.collider.transform;
-
-                        bool belongsToModel =
-                            colliderTransform == root.transform ||
-                            colliderTransform.IsChildOf(
-                                root.transform
-                            );
-
-                        if (!belongsToModel)
-                            continue;
-
                         modelInfo =
-                            root.GetComponentInChildren
+                            model.GetComponentInChildren
                                 <M_ModelInfo>(true);
 
-                        break;
+                        if (modelInfo != null &&
+                            modelInfo.Data != null)
+                        {
+                            break;
+                        }
+
+                        modelInfo = null;
                     }
                 }
 
-                if (modelInfo == null ||
-                    modelInfo.Data == null ||
-                    !modelInfo.gameObject.activeInHierarchy)
-                {
-                    continue;
-                }
+                if (modelInfo != null)
+                    break;
+            }
 
+            if (modelInfo == null)
+                modelInfo = BuscarModeloVisible(posicion);
+
+            if (modelInfo != null &&
+                modelInfo.Data != null)
+            {
                 selectedModel = modelInfo;
+
                 ShowInfo(modelInfo.Data);
 
-                return;
+                estado = "FICHA ABIERTA: " +
+                    modelInfo.Data.name;
+
+                break;
+            }
+            else
+            {
+                estado = "MODELO NO ENCONTRADO";
             }
         }
     }
 
-    private bool TouchOverButton(Vector2 position)
+    private M_ModelInfo BuscarModeloVisible(
+        Vector2 posicion
+    )
+    {
+        if (imageTracking == null)
+            return null;
+
+        M_ModelInfo mejor = null;
+        float menorDistancia = float.MaxValue;
+        int cantidad = 0;
+
+        M_ModelInfo unico = null;
+
+        foreach (GameObject model
+            in imageTracking.ActiveModels)
+        {
+            if (model == null)
+                continue;
+
+            M_ModelInfo info =
+                model.GetComponentInChildren
+                    <M_ModelInfo>(true);
+
+            if (info == null || info.Data == null)
+                continue;
+
+            cantidad++;
+            unico = info;
+
+            Renderer[] renderers =
+                model.GetComponentsInChildren<Renderer>();
+
+            bool tieneBounds = false;
+            Bounds limites = new Bounds();
+
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer == null ||
+                    !renderer.enabled ||
+                    !renderer.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                if (!tieneBounds)
+                {
+                    limites = renderer.bounds;
+                    tieneBounds = true;
+                }
+                else
+                {
+                    limites.Encapsulate(renderer.bounds);
+                }
+            }
+
+            if (!tieneBounds)
+                continue;
+
+            Vector3 pantalla =
+                arCamera.WorldToScreenPoint(
+                    limites.center
+                );
+
+            if (pantalla.z <= 0f)
+                continue;
+
+            float distancia =
+                Vector2.Distance(
+                    posicion,
+                    new Vector2(
+                        pantalla.x,
+                        pantalla.y
+                    )
+                );
+
+            if (distancia < menorDistancia)
+            {
+                menorDistancia = distancia;
+                mejor = info;
+            }
+        }
+
+        if (cantidad == 1)
+            return unico;
+
+        if (menorDistancia <= 150f)
+            return mejor;
+
+        return null;
+    }
+
+    private bool TocoBoton(Vector2 posicion)
     {
         if (EventSystem.current == null)
             return false;
@@ -197,28 +321,28 @@ public class M_RaycastManager : MonoBehaviour
                 EventSystem.current
             );
 
-        pointer.position = position;
+        pointer.position = posicion;
 
-        List<RaycastResult> results =
+        List<RaycastResult> resultados =
             new List<RaycastResult>();
 
         EventSystem.current.RaycastAll(
             pointer,
-            results
+            resultados
         );
 
-        foreach (RaycastResult result in results)
+        foreach (RaycastResult resultado in resultados)
         {
-            if (result.gameObject == null)
+            if (resultado.gameObject == null)
                 continue;
 
-            Button button =
-                result.gameObject
+            Button boton =
+                resultado.gameObject
                     .GetComponentInParent<Button>();
 
-            if (button != null &&
-                button.IsActive() &&
-                button.IsInteractable())
+            if (boton != null &&
+                boton.IsActive() &&
+                boton.IsInteractable())
             {
                 return true;
             }
@@ -231,6 +355,9 @@ public class M_RaycastManager : MonoBehaviour
     {
         if (data == null)
             return;
+
+        if (infoPanel != null)
+            infoPanel.SetActive(true);
 
         if (modelName != null)
             modelName.text =
@@ -246,7 +373,7 @@ public class M_RaycastManager : MonoBehaviour
 
         if (levelText != null)
             levelText.text =
-                "Nivel / Periodo: " + data.level;
+                "Nivel: " + data.level;
 
         if (iconImage != null)
         {
@@ -258,16 +385,47 @@ public class M_RaycastManager : MonoBehaviour
 
         if (funFactText != null)
         {
-            funFactText.text = "Dato curioso:";
             funFactText.gameObject.SetActive(true);
+            funFactText.text = "Dato curioso:";
         }
 
-        // Mostrar la ficha solo al seleccionar.
-        if (infoPanel != null)
-            infoPanel.SetActive(true);
+        if (funFactButton != null)
+            funFactButton.gameObject.SetActive(true);
 
-        PositionButtons();
-        PlaySoundtrack(data.soundtrack);
+        if (closeButton != null)
+            closeButton.gameObject.SetActive(true);
+
+        PosicionarBotones();
+
+        ReproducirSoundtrack(data.soundtrack);
+    }
+
+    private void ConfigurarAudio()
+    {
+        if (soundtrackPlayer == null)
+            return;
+
+        soundtrackPlayer.playOnAwake = false;
+        soundtrackPlayer.spatialBlend = 0f;
+        soundtrackPlayer.volume = 1f;
+        soundtrackPlayer.mute = false;
+        soundtrackPlayer.loop = true;
+    }
+
+    private void ReproducirSoundtrack(AudioClip clip)
+    {
+        if (soundtrackPlayer == null)
+            return;
+
+        ConfigurarAudio();
+
+        soundtrackPlayer.Stop();
+        soundtrackPlayer.clip = clip;
+
+        if (clip != null)
+        {
+            soundtrackPlayer.Play();
+        }
     }
 
     public void ShowFunFact()
@@ -281,15 +439,22 @@ public class M_RaycastManager : MonoBehaviour
 
         funFactVisible = !funFactVisible;
 
-        funFactText.text = funFactVisible
-            ? "Dato curioso: " +
-              selectedModel.Data.funFact
-            : "Dato curioso:";
+        if (funFactVisible)
+        {
+            funFactText.text =
+                "Dato curioso: " +
+                selectedModel.Data.funFact;
+        }
+        else
+        {
+            funFactText.text = "Dato curioso:";
+        }
     }
 
     public void CloseInfo()
     {
         ClearInfo();
+        estado = "FICHA CERRADA";
     }
 
     private void ClearInfo()
@@ -297,7 +462,11 @@ public class M_RaycastManager : MonoBehaviour
         selectedModel = null;
         funFactVisible = false;
 
-        StopSoundtrack();
+        if (soundtrackPlayer != null)
+        {
+            soundtrackPlayer.Stop();
+            soundtrackPlayer.clip = null;
+        }
 
         if (modelName != null)
             modelName.text = "";
@@ -324,49 +493,26 @@ public class M_RaycastManager : MonoBehaviour
             infoPanel.SetActive(false);
     }
 
-    private void PlaySoundtrack(AudioClip clip)
-    {
-        if (soundtrackPlayer == null)
-            return;
-
-        soundtrackPlayer.Stop();
-
-        soundtrackPlayer.clip = clip;
-        soundtrackPlayer.loop = true;
-
-        if (clip != null)
-            soundtrackPlayer.Play();
-    }
-
-    private void StopSoundtrack()
-    {
-        if (soundtrackPlayer == null)
-            return;
-
-        soundtrackPlayer.Stop();
-        soundtrackPlayer.clip = null;
-    }
-
-    private void CreateButtons()
+    private void CrearBotones()
     {
         if (infoPanel == null)
             return;
 
-        RectTransform parent =
+        RectTransform panel =
             infoPanel.GetComponent<RectTransform>();
 
-        if (parent == null)
+        if (panel == null)
             return;
 
-        funFactButton = CreateButton(
-            parent,
+        funFactButton = CrearBoton(
+            panel,
             "Boton_FunFact",
             "FUN FACT",
             new Color(0.16f, 0.39f, 0.58f)
         );
 
-        closeButton = CreateButton(
-            parent,
+        closeButton = CrearBoton(
+            panel,
             "Boton_Cerrar",
             "CERRAR",
             new Color(0.50f, 0.22f, 0.22f)
@@ -388,209 +534,203 @@ public class M_RaycastManager : MonoBehaviour
             CloseInfo
         );
 
-        PositionButtons();
+        PosicionarBotones();
     }
 
-    private Button CreateButton(
-        RectTransform parent,
-        string objectName,
-        string labelText,
+    private Button CrearBoton(
+        RectTransform padre,
+        string nombre,
+        string texto,
         Color color
     )
     {
-        Transform existing =
-            parent.Find(objectName);
+        Transform existente = padre.Find(nombre);
 
-        GameObject obj;
+        GameObject objeto;
 
-        if (existing != null)
+        if (existente != null)
         {
-            obj = existing.gameObject;
+            objeto = existente.gameObject;
         }
         else
         {
-            obj = new GameObject(
-                objectName,
+            objeto = new GameObject(
+                nombre,
                 typeof(RectTransform),
                 typeof(CanvasRenderer),
                 typeof(Image),
                 typeof(Button)
             );
 
-            obj.transform.SetParent(
-                parent,
+            objeto.transform.SetParent(
+                padre,
                 false
             );
         }
 
-        Image background =
-            obj.GetComponent<Image>();
+        Image imagen =
+            objeto.GetComponent<Image>();
 
-        Button button =
-            obj.GetComponent<Button>();
+        if (imagen == null)
+            imagen = objeto.AddComponent<Image>();
 
-        if (background == null)
-            background = obj.AddComponent<Image>();
+        imagen.color = color;
+        imagen.raycastTarget = true;
 
-        if (button == null)
-            button = obj.AddComponent<Button>();
+        Button boton =
+            objeto.GetComponent<Button>();
 
-        background.color = color;
-        background.raycastTarget = true;
-        button.targetGraphic = background;
+        if (boton == null)
+            boton = objeto.AddComponent<Button>();
+
+        boton.targetGraphic = imagen;
 
         RectTransform rect =
-            obj.GetComponent<RectTransform>();
+            objeto.GetComponent<RectTransform>();
 
         rect.anchorMin =
-            new Vector2(0.5f, 0.5f);
+            new Vector2(0.5f, 0f);
 
         rect.anchorMax =
-            new Vector2(0.5f, 0.5f);
+            new Vector2(0.5f, 0f);
 
         rect.pivot =
-            new Vector2(0.5f, 0.5f);
+            new Vector2(0.5f, 0f);
 
         rect.sizeDelta = buttonSize;
 
-        Transform existingText =
-            obj.transform.Find("Texto");
+        Transform textoExistente =
+            objeto.transform.Find("Texto");
 
-        GameObject textObj;
+        GameObject textoObjeto;
 
-        if (existingText != null)
+        if (textoExistente != null)
         {
-            textObj = existingText.gameObject;
+            textoObjeto = textoExistente.gameObject;
         }
         else
         {
-            textObj = new GameObject(
+            textoObjeto = new GameObject(
                 "Texto",
                 typeof(RectTransform),
                 typeof(CanvasRenderer),
                 typeof(TextMeshProUGUI)
             );
 
-            textObj.transform.SetParent(
-                obj.transform,
+            textoObjeto.transform.SetParent(
+                objeto.transform,
                 false
             );
         }
 
         RectTransform textRect =
-            textObj.GetComponent<RectTransform>();
+            textoObjeto.GetComponent<RectTransform>();
 
         textRect.anchorMin = Vector2.zero;
         textRect.anchorMax = Vector2.one;
         textRect.offsetMin = Vector2.zero;
         textRect.offsetMax = Vector2.zero;
 
-        TextMeshProUGUI text =
-            textObj.GetComponent<TextMeshProUGUI>();
+        TextMeshProUGUI label =
+            textoObjeto.GetComponent<TextMeshProUGUI>();
 
-        text.text = labelText;
-        text.fontSize = 22;
-        text.color = Color.white;
-        text.alignment =
-            TextAlignmentOptions.Center;
-
-        text.raycastTarget = false;
+        label.text = texto;
+        label.fontSize = 22;
+        label.color = Color.white;
+        label.alignment = TextAlignmentOptions.Center;
+        label.raycastTarget = false;
 
         if (modelName != null &&
             modelName.font != null)
         {
-            text.font = modelName.font;
+            label.font = modelName.font;
         }
 
-        return button;
+        return boton;
     }
 
-    private void PositionButtons()
+    private void PosicionarBotones()
     {
-        if (infoPanel == null ||
-            funFactButton == null ||
+        if (funFactButton == null ||
             closeButton == null)
         {
             return;
         }
 
-        RectTransform panel =
-            infoPanel.GetComponent<RectTransform>();
-
-        if (panel == null)
-            return;
-
-        Canvas.ForceUpdateCanvases();
-
-        float bottom = float.MaxValue;
-
-        TMP_Text[] fields =
-        {
-            modelName,
-            descriptionText,
-            categoryText,
-            levelText,
-            funFactText
-        };
-
-        foreach (TMP_Text field in fields)
-        {
-            if (field == null)
-                continue;
-
-            RectTransform rect =
-                field.GetComponent<RectTransform>();
-
-            if (rect == null)
-                continue;
-
-            Vector3[] corners = new Vector3[4];
-            rect.GetWorldCorners(corners);
-
-            for (int i = 0; i < corners.Length; i++)
-            {
-                Vector3 local =
-                    panel.InverseTransformPoint(
-                        corners[i]
-                    );
-
-                bottom = Mathf.Min(
-                    bottom,
-                    local.y
-                );
-            }
-        }
-
-        if (bottom == float.MaxValue)
-            bottom = 0f;
-
-        float y =
-            bottom -
-            buttonTopMargin -
-            buttonSize.y * 0.5f;
-
-        float x =
-            (buttonSize.x + buttonSpacing) *
-            0.5f;
-
         RectTransform funRect =
-            funFactButton
-                .GetComponent<RectTransform>();
+            funFactButton.GetComponent<RectTransform>();
 
         RectTransform closeRect =
-            closeButton
-                .GetComponent<RectTransform>();
+            closeButton.GetComponent<RectTransform>();
 
-        // Como los botones tienen anclas
-        // al centro, usamos coordenadas
-        // locales del panel.
-        funRect.localPosition =
-            new Vector3(-x, y, 0f);
+        // Colocarlos juntos en la parte
+        // inferior del panel.
+        float mitad =
+            (buttonSize.x + buttonSpacing) * 0.5f;
 
-        closeRect.localPosition =
-            new Vector3(x, y, 0f);
+        funRect.anchorMin =
+            new Vector2(0.5f, 0f);
+
+        funRect.anchorMax =
+            new Vector2(0.5f, 0f);
+
+        closeRect.anchorMin =
+            new Vector2(0.5f, 0f);
+
+        closeRect.anchorMax =
+            new Vector2(0.5f, 0f);
+
+        funRect.pivot =
+            new Vector2(0.5f, 0f);
+
+        closeRect.pivot =
+            new Vector2(0.5f, 0f);
+
+        funRect.anchoredPosition =
+            new Vector2(-mitad, buttonBottomMargin);
+
+        closeRect.anchoredPosition =
+            new Vector2(mitad, buttonBottomMargin);
 
         funRect.sizeDelta = buttonSize;
         closeRect.sizeDelta = buttonSize;
+
+        funRect.SetAsLastSibling();
+        closeRect.SetAsLastSibling();
+    }
+
+    private void OnGUI()
+    {
+        if (!mostrarDiagnostico)
+            return;
+
+        float ancho =
+            Mathf.Min(Screen.width - 24f, 680f);
+
+        float x =
+            (Screen.width - ancho) * 0.5f;
+
+        float y =
+            Screen.height -
+            Screen.safeArea.yMax + 125f;
+
+        GUIStyle estilo =
+            new GUIStyle(GUI.skin.box);
+
+        estilo.alignment =
+            TextAnchor.MiddleCenter;
+
+        estilo.fontSize =
+            Mathf.Clamp(
+                Screen.width / 35, 16, 30
+            );
+
+        estilo.normal.textColor = Color.white;
+
+        GUI.Box(
+            new Rect(x, y, ancho, 85f),
+            estado,
+            estilo
+        );
     }
 }
