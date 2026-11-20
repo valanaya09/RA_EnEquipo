@@ -41,7 +41,7 @@ public class M_RaycastManager : MonoBehaviour
     [Header("Botones automaticos")]
     [SerializeField]
     private Vector2 buttonSize =
-        new Vector2(200f, 150f);
+        new Vector2(200f, 400f);
 
     [SerializeField]
     private float buttonSpacing = 25f;
