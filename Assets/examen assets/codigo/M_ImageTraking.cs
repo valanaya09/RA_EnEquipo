@@ -16,11 +16,15 @@ public class M_ImageTracking : MonoBehaviour
         [Header("Prefab del modelo")]
         public GameObject imagePrefab;
 
-        [Header("Posicion respecto a la foto (metros)")]
+        [Header("Posicion adicional")]
         public Vector3 positionOffset = Vector3.zero;
 
-        [Header("Rotacion respecto a la foto (grados)")]
+        [Header("Rotacion adicional")]
         public Vector3 rotationOffset = Vector3.zero;
+
+        [Header("Multiplicador de tamano")]
+        [Min(0.01f)]
+        public float multiplicadorTamano = 1f;
     }
 
     [Header("AR Image Manager")]
@@ -32,13 +36,50 @@ public class M_ImageTracking : MonoBehaviour
     private List<ImagePrefab> imagePrefabs =
         new List<ImagePrefab>();
 
-    [Header("Tiempo de tolerancia (segundos)")]
+    [Header("Tiempo de tolerancia")]
     [SerializeField, Min(0f)]
     private float trackingTimeout = 1f;
+
+    [Header("Indicador en pantalla")]
+    [SerializeField]
+    private bool mostrarIndicador = true;
+
+    [Header("Desplazamiento general")]
+    [SerializeField]
+    private Vector3 desplazamientoGeneral =
+        new Vector3(0f, -0.45f, -0.30f);
+
+    [Header("Rotacion Tierra")]
+    [SerializeField]
+    private Vector3 rotacionTierra =
+        new Vector3(90f, 0f, 0f);
+
+    [Header("Rotacion Cohete")]
+    [SerializeField]
+    private Vector3 rotacionCohete =
+        new Vector3(90f, 0f, 0f);
+
+    [Header("Rotacion Saturno")]
+    [SerializeField]
+    private Vector3 rotacionSaturno =
+        new Vector3(90f, 0f, 0f);
+
+    [Header("Rotacion Satelite")]
+    [SerializeField]
+    private Vector3 rotacionSatelite =
+        new Vector3(90f, 0f, 0f);
 
     private readonly Dictionary<TrackableId, GameObject>
         spawnedObjects =
         new Dictionary<TrackableId, GameObject>();
+
+    private readonly Dictionary<TrackableId, Transform>
+        modelContainers =
+        new Dictionary<TrackableId, Transform>();
+
+    private readonly HashSet<TrackableId>
+        imagesWithValidPose =
+        new HashSet<TrackableId>();
 
     private readonly Dictionary<TrackableId, float>
         lastTrackingTime =
@@ -52,8 +93,11 @@ public class M_ImageTracking : MonoBehaviour
         {
             foreach (GameObject model in spawnedObjects.Values)
             {
-                if (model != null && model.activeInHierarchy)
+                if (model != null &&
+                    model.activeInHierarchy)
+                {
                     yield return model;
+                }
             }
         }
     }
@@ -76,12 +120,7 @@ public class M_ImageTracking : MonoBehaviour
         }
 
         if (imageManager == null)
-        {
-            Debug.LogError(
-                "M_ImageTracking: falta ARTrackedImageManager."
-            );
             return;
-        }
 
         imageManager.trackablesChanged.AddListener(
             OnImagesChanged
@@ -108,7 +147,9 @@ public class M_ImageTracking : MonoBehaviour
                 model.SetActive(false);
         }
 
+        imagesWithValidPose.Clear();
         lastTrackingTime.Clear();
+
         ModelsChanged?.Invoke();
     }
 
@@ -122,15 +163,20 @@ public class M_ImageTracking : MonoBehaviour
             if (model == null)
                 continue;
 
-            bool visible =
+            bool recentlyTracked =
+                imagesWithValidPose.Contains(id) &&
                 lastTrackingTime.TryGetValue(
                     id, out float lastTime
                 ) &&
                 Time.time - lastTime <= trackingTimeout;
 
-            if (model.activeSelf != visible)
+            if (model.activeSelf != recentlyTracked)
             {
-                model.SetActive(visible);
+                model.SetActive(recentlyTracked);
+
+                if (recentlyTracked)
+                    IniciarAnimaciones(model);
+
                 ModelsChanged?.Invoke();
             }
         }
@@ -150,9 +196,9 @@ public class M_ImageTracking : MonoBehaviour
             UpdateTrackedImage(image);
         }
 
-        foreach (var removedImage in args.removed)
+        foreach (var removed in args.removed)
         {
-            RemoveTrackedImage(removedImage.Key);
+            RemoveTrackedImage(removed.Key);
         }
     }
 
@@ -163,67 +209,150 @@ public class M_ImageTracking : MonoBehaviour
 
         TrackableId id = image.trackableId;
 
-        ImagePrefab config = FindConfiguration(
-            image.referenceImage.name
-        );
+        string detectedName =
+            image.referenceImage.name;
 
-        if (config == null || config.imagePrefab == null)
+        ImagePrefab config =
+            FindConfiguration(detectedName);
+
+        if (config == null ||
+            config.imagePrefab == null)
+        {
             return;
+        }
 
-        // Crear el modelo solamente una vez
-        // por cada imagen rastreada.
         if (!spawnedObjects.TryGetValue(
             id, out GameObject model
         ) || model == null)
         {
-            model = Instantiate(
-                config.imagePrefab,
+            GameObject container =
+                new GameObject(
+                    detectedName + "_AR_Posicion"
+                );
+
+            container.transform.SetParent(
                 image.transform,
                 false
             );
 
-            model.name = config.imageName + "_AR";
+            container.transform.localPosition =
+                config.positionOffset +
+                desplazamientoGeneral;
 
-            // Desplazamiento respecto al marcador.
-            model.transform.localPosition =
-                config.positionOffset;
+            Vector3 rotacion =
+                config.rotationOffset;
 
-            model.transform.localRotation =
-                Quaternion.Euler(config.rotationOffset);
+            if (detectedName == "Tierra")
+            {
+                rotacion += rotacionTierra;
+            }
+            else if (detectedName == "Cohete")
+            {
+                rotacion += rotacionCohete;
+            }
+            else if (detectedName == "Saturno")
+            {
+                rotacion += rotacionSaturno;
+            }
+            else if (detectedName == "Satelite")
+            {
+                rotacion += rotacionSatelite;
+            }
 
-            // Conservamos la escala del Prefab.
+            container.transform.localRotation =
+                Quaternion.Euler(rotacion);
+
+            float multiplicador =
+                Mathf.Max(
+                    0.01f,
+                    config.multiplicadorTamano
+                );
+
+            container.transform.localScale =
+                Vector3.one * multiplicador;
+
+            model = Instantiate(
+                config.imagePrefab,
+                container.transform,
+                false
+            );
+
+            model.name =
+                detectedName + "_AR";
+
             model.SetActive(false);
 
-            spawnedObjects[id] = model;
+            modelContainers[id] =
+                container.transform;
 
-            Debug.Log(
-                "M_ImageTracking: modelo creado para " +
-                config.imageName
-            );
+            spawnedObjects[id] = model;
 
             ModelsChanged?.Invoke();
         }
 
-        // El modelo es hijo del ARTrackedImage.
-        // Sigue su posicion automaticamente.
-        if (image.trackingState == TrackingState.Tracking)
+        if (image.trackingState ==
+            TrackingState.Tracking)
         {
-            lastTrackingTime[id] = Time.time;
+            imagesWithValidPose.Add(id);
+
+            lastTrackingTime[id] =
+                Time.time;
 
             if (!model.activeSelf)
             {
                 model.SetActive(true);
+
+                IniciarAnimaciones(model);
+
                 ModelsChanged?.Invoke();
             }
         }
     }
 
-    private ImagePrefab FindConfiguration(string imageName)
+    private void IniciarAnimaciones(GameObject model)
+    {
+        Animator[] animators =
+            model.GetComponentsInChildren<Animator>(true);
+
+        foreach (Animator animator in animators)
+        {
+            if (animator == null ||
+                !animator.enabled ||
+                !animator.gameObject.activeInHierarchy ||
+                animator.runtimeAnimatorController == null)
+            {
+                continue;
+            }
+
+            animator.Rebind();
+            animator.Update(0f);
+
+            foreach (
+                AnimatorControllerParameter parametro
+                in animator.parameters)
+            {
+                if (parametro.name == "idle" &&
+                    parametro.type ==
+                    AnimatorControllerParameterType.Bool)
+                {
+                    animator.SetBool("idle", true);
+                    break;
+                }
+            }
+        }
+    }
+
+    private ImagePrefab FindConfiguration(
+        string imageName
+    )
     {
         foreach (ImagePrefab item in imagePrefabs)
         {
-            if (item != null && item.imageName == imageName)
+            if (item != null &&
+                item.imageName == imageName)
+            {
                 return item;
+            }
         }
 
         return null;
@@ -231,17 +360,171 @@ public class M_ImageTracking : MonoBehaviour
 
     private void RemoveTrackedImage(TrackableId id)
     {
-        if (spawnedObjects.TryGetValue(
+        spawnedObjects.TryGetValue(
             id, out GameObject model
+        );
+
+        spawnedObjects.Remove(id);
+
+        if (modelContainers.TryGetValue(
+            id, out Transform container
         ))
         {
-            spawnedObjects.Remove(id);
+            modelContainers.Remove(id);
 
-            if (model != null)
-                Destroy(model);
+            if (container != null)
+                Destroy(container.gameObject);
+        }
+        else if (model != null)
+        {
+            Destroy(model);
         }
 
+        imagesWithValidPose.Remove(id);
         lastTrackingTime.Remove(id);
+
         ModelsChanged?.Invoke();
+    }
+
+    private void OnGUI()
+    {
+        if (!mostrarIndicador)
+            return;
+
+        string mensaje =
+            "SIN IMAGEN DETECTADA";
+
+        string detalle =
+            "Buscando imagenes...";
+
+        Color color =
+            new Color(0.18f, 0.22f, 0.28f);
+
+        if (imageManager != null)
+        {
+            ARTrackedImage seleccionada = null;
+
+            foreach (ARTrackedImage image
+                in imageManager.trackables)
+            {
+                if (image.trackingState ==
+                    TrackingState.Tracking)
+                {
+                    seleccionada = image;
+                    break;
+                }
+            }
+
+            if (seleccionada != null)
+            {
+                string nombre =
+                    seleccionada.referenceImage.name;
+
+                mensaje =
+                    "IMAGEN DETECTADA: " +
+                    nombre.ToUpper();
+
+                color =
+                    new Color(0.12f, 0.48f, 0.32f);
+
+                if (
+                    spawnedObjects.TryGetValue(
+                        seleccionada.trackableId,
+                        out GameObject modelo
+                    ) &&
+                    modelo != null &&
+                    modelo.activeInHierarchy)
+                {
+                    detalle = "MODELO ACTIVO";
+                }
+                else
+                {
+                    detalle = "MODELO NO VISIBLE";
+                }
+            }
+        }
+
+        float ancho =
+            Mathf.Min(
+                Screen.width - 24f,
+                650f
+            );
+
+        float alto = 100f;
+
+        float x =
+            (Screen.width - ancho) / 2f;
+
+        float y =
+            Screen.height -
+            Screen.safeArea.yMax + 15f;
+
+        Rect fondo =
+            new Rect(x, y, ancho, alto);
+
+        Color anterior = GUI.color;
+
+        GUI.color = color;
+
+        GUI.DrawTexture(
+            fondo,
+            Texture2D.whiteTexture
+        );
+
+        GUI.color = anterior;
+
+        GUIStyle titulo =
+            new GUIStyle(GUI.skin.label);
+
+        titulo.alignment =
+            TextAnchor.MiddleCenter;
+
+        titulo.fontStyle =
+            FontStyle.Bold;
+
+        titulo.fontSize =
+            Mathf.Clamp(
+                Screen.width / 35,
+                16,
+                32
+            );
+
+        titulo.normal.textColor =
+            Color.white;
+
+        GUIStyle subtitulo =
+            new GUIStyle(titulo);
+
+        subtitulo.fontStyle =
+            FontStyle.Normal;
+
+        subtitulo.fontSize =
+            Mathf.Clamp(
+                Screen.width / 45,
+                13,
+                25
+            );
+
+        GUI.Label(
+            new Rect(
+                x + 5,
+                y + 12,
+                ancho - 10,
+                40
+            ),
+            mensaje,
+            titulo
+        );
+
+        GUI.Label(
+            new Rect(
+                x + 5,
+                y + 53,
+                ancho - 10,
+                32
+            ),
+            detalle,
+            subtitulo
+        );
     }
 }

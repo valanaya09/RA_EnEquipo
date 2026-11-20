@@ -21,4 +21,4 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: eb14b5a97e3661446940788df5d7cdeb, type: 3}
   funFact: "Un cohete puede viajar por el vac\xEDo del espacio porque lleva su propio
     ox\xEDgeno para quemar combustible! No necesita aire del exterior para funcionar"
-  soundtrack: {fileID: 0}
+  soundtrack: {fileID: 8300000, guid: b1d1edfeef8e7a541aceb7fa39089f2d, type: 3}
